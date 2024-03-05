@@ -1,6 +1,16 @@
 import { api } from "@/trpc/server";
 import React from "react";
 
+const dayjs = require('dayjs');
+const utcPlugin = require('dayjs/plugin/utc');
+const customParseFormat = require('dayjs/plugin/customParseFormat');
+
+dayjs.extend(utcPlugin);
+dayjs.extend(customParseFormat);
+
+const date = dayjs('March 30th, 2024', 'MMMM Do, YYYY');
+const test = date.utc().format();
+
 const ViewTasks: React.FC = async () => {
   const tasks = await api.task.getAllTask.query();
   return (
@@ -34,7 +44,7 @@ const ViewTasks: React.FC = async () => {
         </div>
       ) : (
         <h1 className="mt-6 text-center text-lg text-white">
-          You have no tasks to complete.
+          You have no tasks to complete. {test}
         </h1>
       )}
     </div>

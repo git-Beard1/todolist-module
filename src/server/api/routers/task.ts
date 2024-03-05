@@ -1,8 +1,49 @@
 import { z } from "zod";
+import { initTRPC, TRPCError } from "@trpc/server";
 import { createTRPCRouter, publicProcedure } from "@/server/api/trpc";
+import { Content } from "next/font/google";
 
 export const taskRouter = createTRPCRouter({
-  getAllTask: publicProcedure.query(({ctx})=> {
-    return ctx.db.task.findMany();
-  })
+  getAllTask: publicProcedure.query(async ({ ctx }) => {
+    try {
+      const tasks = await ctx.db.task.findMany();
+      return tasks;
+    } catch (error) {
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Failed to fetch tasks",
+        cause: error,
+      });
+    }
+  }),
+
+  createdTask: publicProcedure
+    .input(
+      z.object({
+        title: z.string().min(1),
+        content: z.string().min(1),
+        startDate: z.string().datetime(),
+        deadline: z.string().datetime(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      try {
+        const { title, content, startDate, deadline } = input;
+        const createTask = await ctx.db.task.create({
+          data: {
+            title,
+            content,
+            startDate,
+            deadline,
+          },
+        });
+        return createTask;
+      } catch (error) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed To Create New Task",
+          cause: error,
+        });
+      }
+    }),
 });
