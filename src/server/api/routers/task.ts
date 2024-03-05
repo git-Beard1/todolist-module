@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { initTRPC, TRPCError } from "@trpc/server";
 import { createTRPCRouter, publicProcedure } from "@/server/api/trpc";
-import { Content } from "next/font/google";
+
 
 export const taskRouter = createTRPCRouter({
   getAllTask: publicProcedure.query(async ({ ctx }) => {
@@ -22,19 +22,15 @@ export const taskRouter = createTRPCRouter({
       z.object({
         title: z.string().min(1),
         content: z.string().min(1),
-        startDate: z.string().datetime(),
-        deadline: z.string().datetime(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
       try {
-        const { title, content, startDate, deadline } = input;
+        const { title, content } = input;
         const createTask = await ctx.db.task.create({
           data: {
             title,
             content,
-            startDate,
-            deadline,
           },
         });
         return createTask;

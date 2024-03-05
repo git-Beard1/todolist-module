@@ -1,38 +1,23 @@
 "use client";
 
-import React from "react";
-import Link from "next/link";
+import { useState } from "react";
 import { api } from "@/trpc/react";
-import { format } from "date-fns";
-import { Calendar as CalendarIcon } from "lucide-react";
-
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-
-import toast, { Toaster } from "react-hot-toast";
+import { Button } from "../../components/ui/button";
 
 const CreateTasks: React.FC = () => {
-  const [taskData, setTaskData] = React.useState<{
+  const [taskData, setTaskData] = useState<{
     title: string;
     content: string;
-    startDate: Date | string;
-    deadline: Date | string;
-  }>({ title: "", content: "", startDate: "", deadline: "" });
+  }>({ title: "", content: "" });
 
-  const [textMessage, setTextMessage] = React.useState<string | null>(null);
+  const [textMessage, setTextMessage] = useState<string | null>(null);
 
   const createTask = api.task.createdTask.useMutation({
     onSuccess: (newTask) => {
-      setTextMessage(`${newTask.title} task has been added`);
+      setTextMessage(`${newTask.title} announcement has been added`);
     },
     onError: (error) => {
-      setTextMessage(`Error creating task: ${error.message}`);
+      setTextMessage(`Error creating announcement: ${error.message}`);
     },
   });
 
@@ -49,8 +34,6 @@ const CreateTasks: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    const { title, content, startDate, deadline } = taskData;
-
     if (!taskData.title || !taskData.content) {
       setTextMessage("Error: Please fill in both title and content.");
       return;
@@ -58,22 +41,18 @@ const CreateTasks: React.FC = () => {
 
     try {
       createTask.mutate({
-        title,
-        content,
-        startDate:
-          startDate instanceof Date ? startDate.toISOString() : startDate,
-        deadline: 
-          deadline instanceof Date ? deadline.toISOString() : deadline,
+        title: taskData.title,
+        content: taskData.content,
       });
       setTaskData({
         title: "",
         content: "",
-        startDate: "",
-        deadline: "",
       });
       setTextMessage(null);
     } catch (error) {
-      setTextMessage(`Error creating task: ${(error as Error).message}`);
+      setTextMessage(
+        `Error creating announcement: ${(error as Error).message}`,
+      );
     }
   };
 
@@ -126,7 +105,7 @@ const CreateTasks: React.FC = () => {
           />
         </div>
 
-        {/* Date Picker Field (Start Date) */}
+        {/* Date Picker Field (Start Date)
         <div className="mb-6">
           <label
             className="mb-2 block text-sm font-bold text-gray-700"
@@ -156,19 +135,25 @@ const CreateTasks: React.FC = () => {
             <PopoverContent className="w-auto p-0">
               <Calendar
                 mode="single"
-                selected={taskData.startDate instanceof Date ? taskData.startDate : undefined}
+                selected={
+                  taskData.startDate instanceof Date
+                    ? taskData.startDate
+                    : undefined
+                }
                 onSelect={(day) => {
                   if (day instanceof Date) {
-                    {day}
+                    {
+                      day;
+                    }
                   }
                 }}
                 initialFocus
               />
             </PopoverContent>
           </Popover>
-        </div>
+        </div> */}
 
-        {/* Date Picker (Deadline) */}
+        {/* Date Picker (Deadline)
         <div className="mb-6">
           <label
             className="mb-2 block text-sm font-bold text-gray-700"
@@ -187,24 +172,34 @@ const CreateTasks: React.FC = () => {
                 )}
               >
                 <CalendarIcon className="mr-2 h-4 w-4" />
-                {taskData.deadline ? format(taskData.deadline, "PPP") : <span>Pick a date</span>}
+                {taskData.deadline ? (
+                  format(taskData.deadline, "PPP")
+                ) : (
+                  <span>Pick a date</span>
+                )}
               </Button>
             </PopoverTrigger>
 
             <PopoverContent className="w-auto p-0">
               <Calendar
                 mode="single"
-                selected={taskData.deadline instanceof Date ? taskData.deadline : undefined}
+                selected={
+                  taskData.deadline instanceof Date
+                    ? taskData.deadline
+                    : undefined
+                }
                 onSelect={(day) => {
                   if (day instanceof Date) {
-                    {day}
+                    {
+                      day;
+                    }
                   }
                 }}
                 initialFocus
               />
             </PopoverContent>
           </Popover>
-        </div>
+        </div> */}
 
         {/* Buttons */}
         <div className="grid grid-cols-2 gap-4">
