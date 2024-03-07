@@ -1,18 +1,21 @@
-import { api } from "@/trpc/server";
+"use client"
+
+import { api } from "@/trpc/react";
 import React from "react";
 
-const dayjs = require('dayjs');
-const utcPlugin = require('dayjs/plugin/utc');
-const customParseFormat = require('dayjs/plugin/customParseFormat');
+const dayjs = require("dayjs");
+const utcPlugin = require("dayjs/plugin/utc");
+const customParseFormat = require("dayjs/plugin/customParseFormat");
 
 dayjs.extend(utcPlugin);
 dayjs.extend(customParseFormat);
 
-const date = dayjs('March 30th, 2024', 'MMMM Do, YYYY');
+const date = dayjs("March 30th, 2024", "MMMM Do, YYYY");
 const test = date.utc().format();
 
-const ViewTasks: React.FC = async () => {
-  const tasks = await api.task.getAllTask.query();
+const ViewTasks: React.FC =  () => {
+  const { data: tasks = [], refetch: reload } = api.task.getAllTask.useQuery();
+
   return (
     <div className="flex justify-center">
       {tasks && tasks.length !== 0 ? (

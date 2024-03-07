@@ -11,6 +11,8 @@ model Task {
     id        String   @id @default(uuid())
     title     String
     content   String
+    startDate DateTime @db.Timestamptz(3)
+    deadline DateTime @db.Timestamptz(3)
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 }

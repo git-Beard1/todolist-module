@@ -22,15 +22,19 @@ export const taskRouter = createTRPCRouter({
       z.object({
         title: z.string().min(1),
         content: z.string().min(1),
+        startDate: z.string().datetime(),
+        deadline: z.string().datetime(),
       }),
     )
     .mutation(async ({ ctx, input }) => {
       try {
-        const { title, content } = input;
+        const { title, content, startDate, deadline } = input;
         const createTask = await ctx.db.task.create({
           data: {
             title,
             content,
+            startDate,
+            deadline
           },
         });
         return createTask;

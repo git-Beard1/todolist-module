@@ -1,8 +1,22 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { api } from "@/trpc/react";
+
 import { Button } from "../../components/ui/button";
+import { format } from "date-fns";
+import { Calendar as CalendarIcon } from "lucide-react";
+
+import { cn } from "@/lib/utils";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { string } from "zod";
+import { start } from "repl";
 
 const CreateTasks: React.FC = () => {
   const [taskData, setTaskData] = useState<{
@@ -10,21 +24,18 @@ const CreateTasks: React.FC = () => {
     content: string;
   }>({ title: "", content: "" });
 
+  const [startDate, setStartDate] = useState<Date | undefined>();
+  const [deadline, setDeadline] = useState<Date | undefined>();
+
   const [textMessage, setTextMessage] = useState<string | null>(null);
 
-  const createTask = api.task.createdTask.useMutation({
-    onSuccess: (newTask) => {
-      setTextMessage(`${newTask.title} announcement has been added`);
-    },
-    onError: (error) => {
-      setTextMessage(`Error creating announcement: ${error.message}`);
-    },
-  });
+  const { mutate: createTask } = api.task.createdTask.useMutation();
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     const { name, value } = e.target;
+
     setTaskData((prevData) => ({
       ...prevData,
       [name]: value,
@@ -34,21 +45,30 @@ const CreateTasks: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
+    const { title, content } = taskData;
+
     if (!taskData.title || !taskData.content) {
       setTextMessage("Error: Please fill in both title and content.");
       return;
     }
 
     try {
-      createTask.mutate({
-        title: taskData.title,
-        content: taskData.content,
-      });
-      setTaskData({
-        title: "",
-        content: "",
-      });
-      setTextMessage(null);
+      createTask(
+        {
+          title,
+          content,
+          startDate: startDate ? startDate.toISOString() : "",
+          deadline: deadline ? deadline.toISOString() : "",
+        },
+        {
+          onSuccess: (newTask) => {
+            setTextMessage("Success");
+          },
+          onError: (error) => {
+            setTextMessage("Error");
+          },
+        },
+      );
     } catch (error) {
       setTextMessage(
         `Error creating announcement: ${(error as Error).message}`,
@@ -57,18 +77,7 @@ const CreateTasks: React.FC = () => {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center">
-      <h1>Creating Task</h1>
-
-      {textMessage && (
-        <div
-          className={`mb-4 ${textMessage.startsWith("Error") ? "text-red-500" : "text-green-500"}`}
-          data-testid="admin-create-message"
-        >
-          {textMessage}
-        </div>
-      )}
-
+    <div className="flex min-h-screen flex-col items-center justify-center">
       {/* Form Starts */}
       <form
         className="mb-4 w-2/6 rounded bg-white px-8 pb-8 pt-6 shadow-md"
@@ -78,14 +87,15 @@ const CreateTasks: React.FC = () => {
         <div className="mb-4">
           <label
             className="mb-2 block text-sm font-bold text-gray-700"
-            htmlFor="taskTitle"
+            htmlFor="task-title"
           >
             Task Title
           </label>
 
           <input
-            className="focus:shadow-outline w-full appearance-none rounded border px-3 py-2 leading-tight text-gray-700 shadow focus:outline-none"
-            id="username"
+            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 focus:border-blue-500 focus:outline-none"
+            data-testid="admin-create-title"
+            name="title"
             type="text"
             placeholder="Task Title"
             value={taskData.title}
@@ -94,6 +104,12 @@ const CreateTasks: React.FC = () => {
         </div>
 
         <div className="mb-4">
+          <label
+            className="mb-2 block text-sm font-bold text-gray-700"
+            htmlFor="taskTitle"
+          >
+            Task Content
+          </label>
           <textarea
             data-testid="admin-create-content-input"
             name="content"
@@ -105,7 +121,7 @@ const CreateTasks: React.FC = () => {
           />
         </div>
 
-        {/* Date Picker Field (Start Date)
+        {/* Date Picker Field (Start Date) */}
         <div className="mb-6">
           <label
             className="mb-2 block text-sm font-bold text-gray-700"
@@ -120,12 +136,12 @@ const CreateTasks: React.FC = () => {
                 variant={"outline"}
                 className={cn(
                   "w-full justify-start text-left font-normal",
-                  !taskData.startDate && "text-muted-foreground",
+                  !startDate && "text-muted-foreground",
                 )}
               >
                 <CalendarIcon className="mr-2 h-4 w-4" />
-                {taskData.startDate ? (
-                  format(taskData.startDate, "PPP")
+                {startDate ? (
+                  format(startDate, "PPP")
                 ) : (
                   <span>Pick a date</span>
                 )}
@@ -135,25 +151,15 @@ const CreateTasks: React.FC = () => {
             <PopoverContent className="w-auto p-0">
               <Calendar
                 mode="single"
-                selected={
-                  taskData.startDate instanceof Date
-                    ? taskData.startDate
-                    : undefined
-                }
-                onSelect={(day) => {
-                  if (day instanceof Date) {
-                    {
-                      day;
-                    }
-                  }
-                }}
+                selected={startDate}
+                onSelect={setStartDate}
                 initialFocus
               />
             </PopoverContent>
           </Popover>
-        </div> */}
+        </div>
 
-        {/* Date Picker (Deadline)
+        {/* Date Picker (Deadline) */}
         <div className="mb-6">
           <label
             className="mb-2 block text-sm font-bold text-gray-700"
@@ -168,48 +174,46 @@ const CreateTasks: React.FC = () => {
                 variant={"outline"}
                 className={cn(
                   "w-full justify-start text-left font-normal",
-                  !taskData.deadline && "text-muted-foreground",
+                  !deadline && "text-muted-foreground",
                 )}
               >
                 <CalendarIcon className="mr-2 h-4 w-4" />
-                {taskData.deadline ? (
-                  format(taskData.deadline, "PPP")
-                ) : (
-                  <span>Pick a date</span>
-                )}
+                {deadline ? format(deadline, "PPP") : <span>Pick a date</span>}
               </Button>
             </PopoverTrigger>
 
             <PopoverContent className="w-auto p-0">
               <Calendar
                 mode="single"
-                selected={
-                  taskData.deadline instanceof Date
-                    ? taskData.deadline
-                    : undefined
-                }
-                onSelect={(day) => {
-                  if (day instanceof Date) {
-                    {
-                      day;
-                    }
-                  }
-                }}
+                selected={deadline}
+                onSelect={setDeadline}
                 initialFocus
               />
             </PopoverContent>
           </Popover>
-        </div> */}
+        </div>
 
         {/* Buttons */}
         <div className="grid grid-cols-2 gap-4">
           {/* Add Task */}
-          <Button className="bg-blue-500">Add Task</Button>
+          <Button className="bg-blue-500" type="submit">
+            Add Task
+          </Button>
 
           {/* Manage Task */}
-          <Button>Manage Task</Button>
+          <Button>
+            <Link href="view">Manage Task</Link>
+          </Button>
         </div>
       </form>
+      {textMessage && (
+        <div
+          className={`mb-4 ${textMessage.startsWith("Error") ? "text-red-500" : "text-green-500"}`}
+          data-testid="admin-create-message"
+        >
+          {textMessage}
+        </div>
+      )}
     </div>
   );
 };
